@@ -69,8 +69,8 @@ def load_data():
     import requests
 
     try:
-        # Google Drive file ID
-        file_id = "1JANe5oLUh3_xIA0TwHxxG-NS74GKC_iF"
+        # Google Drive file ID from secrets
+        file_id = st.secrets["gdrive"]["file_id"]
         db_url = f"https://drive.google.com/uc?id={file_id}"
 
         # Download database file
