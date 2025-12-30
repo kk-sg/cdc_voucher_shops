@@ -271,7 +271,7 @@ if not filtered_df.empty:
 
                 # Category badges - show all types
                 all_types = row['all_types']
-                if all_types and all_types != 'N/A':
+                if pd.notna(all_types) and all_types != 'N/A':
                     categories = [cat.strip() for cat in all_types.split(',')]
                     badges_html = " ".join([
                         f"<span class='category-badge'>{cat.replace('_', ' ').title()}</span>"
@@ -301,17 +301,17 @@ if not filtered_df.empty:
                 col_phone, col_web = st.columns(2)
 
                 with col_phone:
-                    if row['phone_number'] != 'N/A':
+                    if pd.notna(row['phone_number']) and row['phone_number'] != 'N/A':
                         st.markdown(f"📞 {row['phone_number']}")
 
                 with col_web:
-                    if row['website'] != 'N/A':
+                    if pd.notna(row['website']) and row['website'] != 'N/A':
                         st.markdown(f"🌐 [Website]({row['website']})")
 
             with col2:
                 # Action buttons
-                if row['website'] != 'N/A':
-                    st.button("🌐 Visit", key=f"visit_{idx}", help=f"Visit {row['name']}'s website")
+                if pd.notna(row['website']) and row['website'] != 'N/A':
+                    st.link_button("🌐 Visit", row['website'], use_container_width=True)
 
             st.markdown("---")  # Divider between cards
 
