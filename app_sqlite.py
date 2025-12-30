@@ -73,15 +73,33 @@ def load_data():
         file_id = st.secrets["gdrive"]["file_id"]
         db_url = f"https://drive.google.com/uc?id={file_id}"
 
-        # Download database file
-        with st.spinner("Loading merchant database..."):
-            response = requests.get(db_url, timeout=30)
-            response.raise_for_status()
+        # Download database file with progress
+        progress_bar = st.progress(0)
+        status_text = st.empty()
 
-            # Save to temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.db') as tmp_file:
-                tmp_file.write(response.content)
-                tmp_path = tmp_file.name
+        status_text.text("📥 Downloading database from Google Drive (0%)...")
+        response = requests.get(db_url, timeout=60, stream=True)
+        response.raise_for_status()
+
+        # Download in chunks
+        total_size = int(response.headers.get('content-length', 0))
+        chunk_size = 8192
+        downloaded = 0
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.db') as tmp_file:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    tmp_file.write(chunk)
+                    downloaded += len(chunk)
+                    if total_size > 0:
+                        progress = min(downloaded / total_size, 1.0)
+                        progress_bar.progress(progress)
+                        status_text.text(f"📥 Downloading database... ({int(progress*100)}%)")
+
+            tmp_path = tmp_file.name
+
+        progress_bar.progress(1.0)
+        status_text.text("⚙️ Processing database...")
 
         # Connect and query
         conn = sqlite3.connect(tmp_path)
@@ -93,10 +111,16 @@ def load_data():
         import os
         os.unlink(tmp_path)
 
+        status_text.text("🔧 Converting data types...")
+
         # Convert data types
         df['google_rating'] = pd.to_numeric(df['google_rating'], errors='coerce')
         df['review_count'] = pd.to_numeric(df['review_count'], errors='coerce')
         df['price_level'] = pd.to_numeric(df['price_level'], errors='coerce')
+
+        # Clear progress indicators
+        progress_bar.empty()
+        status_text.empty()
 
         return df
 
