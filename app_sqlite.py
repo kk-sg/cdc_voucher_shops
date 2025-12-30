@@ -134,7 +134,9 @@ search_query = st.sidebar.text_input(
 
 # Category filter
 st.sidebar.subheader("📂 Category")
-categories = ['All'] + sorted(df['primary_type'].unique().tolist())
+# Filter out None values before sorting
+valid_categories = [cat for cat in df['primary_type'].unique() if pd.notna(cat)]
+categories = ['All'] + sorted(valid_categories)
 category = st.sidebar.selectbox(
     "Business Type",
     categories,
